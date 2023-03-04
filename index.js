@@ -1,8 +1,6 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { extname } from 'path';
 
-const filePath = new URL('./', import.meta.url);
-
 const imageRetriever = (files) => {
 
   if (files?.length === 0) {
@@ -10,12 +8,11 @@ const imageRetriever = (files) => {
   }
 
   const images = files.filter(file => {
-    return extname(file).slice(1) === 'png' || extname(file).slice(1) === 'jpg';
+    const ext = extname(file).slice(1);
+    return ext === 'png' || ext === 'jpg';
   });
   
-  images.forEach(file => {
-    console.log("arshibo:", file);
-  })
+  console.log(images[images.length-1]);
 
   images.pop();
 
@@ -32,15 +29,28 @@ const getFilesInDir = async (dir) => {
 }
 
 const main = async () => {
-    const contents = await readFile(filePath, { encoding: 'utf8' });
-    return contents;
-}
 
-main()
-  .then(res => console.log(res))
-  .catch(err => {
+  const userPath = process.argv[2];
+  const options = process.argv[3];
+  const destinationPath = process.argv[4];
+
+  if (userPath === undefined) {
+    console.log("no pasastes nada");
+    return;
+  }
+  
+  const filePath = new URL(userPath, import.meta.url);
+
+  try {
+    await readFile(filePath, { encoding: 'utf8' });
+    return;
+  }
+  catch(err) {
     if(err.code === 'EISDIR') {
       getFilesInDir(filePath.pathname);
     }
-  })
+  }
 
+}
+
+main();
