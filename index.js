@@ -1,7 +1,13 @@
-import { readFile, readdir } from 'node:fs/promises';
+import { readdir, copyFile } from 'node:fs/promises';
 import { extname } from 'path';
 
-const imageRetriever = (files) => {
+const args = {
+  originPath: process.argv[2],
+  options: process.argv[3],
+  destinationPath: process.argv[4],
+}
+
+const move = async (files) => {
 
   if (files?.length === 0) {
     return;
@@ -11,46 +17,52 @@ const imageRetriever = (files) => {
     const ext = extname(file).slice(1);
     return ext === 'png' || ext === 'jpg';
   });
-  
-  console.log(images[images.length-1]);
 
-  images.pop();
+  let fileToCopy = images.pop();
 
-  imageRetriever(images);
+  try {
+    await copyFile(fileToCopy, args.destinationPath.pathname+fileToCopy);
+    console.log(fileToCopy, 'was copied');
+  } catch {
+    console.error('The file could not be copied');
+  }
+
+  return move(images);
 }
 
-const getFilesInDir = async (dir) => {
+const readDir = async (filePath) => {
   try {
-    const files = await readdir(dir);
-    imageRetriever(files);
+    const files = await readdir(filePath);
+    return files;
   } catch (err) {
-    console.error(err);
+    console.log(filePath.pathname, "error:", err.code);
   }
+
 }
 
 const main = async () => {
 
-  const userPath = process.argv[2];
-  const options = process.argv[3];
-  const destinationPath = process.argv[4];
-
-  if (userPath === undefined) {
-    console.log("no pasastes nada");
+  if (!args.originPath) {
+    console.log('no input');
     return;
   }
   
-  const filePath = new URL(userPath, import.meta.url);
-
-  try {
-    await readFile(filePath, { encoding: 'utf8' });
+  if (!args.destinationPath) {
+    console.log('no destination dir');
     return;
   }
-  catch(err) {
-    if(err.code === 'EISDIR') {
-      getFilesInDir(filePath.pathname);
-    }
+
+  args.originPath = new URL(args.originPath, import.meta.url);
+  args.destinationPath = new URL(args.destinationPath, import.meta.url);
+
+  if(!await readDir(args.destinationPath)){
+    return;
   }
 
+  const files = await readDir(args.originPath);
+  if(files) {
+    move(files);
+  }
 }
 
 main();
