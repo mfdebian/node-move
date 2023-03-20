@@ -1,13 +1,48 @@
-import { readdir, copyFile } from 'node:fs/promises';
-import { extname } from 'path';
+import { readdir, rename, copyFile } from 'node:fs/promises';
+import { extname, join } from 'path';
 
-const args = {
-  originPath: process.argv[2],
-  options: process.argv[3],
-  destinationPath: process.argv[4],
-}
+const getUserInput = async () => {
 
-const move = async (files) => {
+  const [, , ...args] = process.argv;
+  const [flags, originPath, destinationPath] = args;
+  
+  if (!flags) {
+    throw new Error('no input');
+  }
+  
+  if (!destinationPath) {
+    throw new Error('no destination dir');
+  }
+
+  let source = new URL(originPath, import.meta.url).pathname;
+  let destination = new URL(destinationPath, import.meta.url).pathname;
+
+  try {
+    await readdir(destination);
+  } catch (err) {
+    throw new Error('error trying to read destination dir');
+  }
+
+  let copy = flags === '-c';
+
+  return { source, destination, copy };
+};
+
+const handleUserInput = async (userInput) => {
+
+  const { source, destination } = userInput;
+
+  try {
+    const files = await readdir(source);
+    if(files) {
+      await move(files, source, destination);
+    }
+  } catch (err) {
+    throw new Error('error trying to read source dir');
+  }
+};
+
+const move = async (files, source, destination) => {
 
   if (files?.length === 0) {
     return;
@@ -18,51 +53,32 @@ const move = async (files) => {
     return ext === 'png' || ext === 'jpg';
   });
 
-  let fileToCopy = images.pop();
+  let fileToMove = images.pop();
 
   try {
-    await copyFile(fileToCopy, args.destinationPath.pathname+fileToCopy);
-    console.log(fileToCopy, 'was copied');
+    await rename(join(source, fileToMove), join(destination, fileToMove));
+    console.log(fileToMove, 'was moved');
   } catch {
-    console.error('The file could not be copied');
+    throw new Error('error trying to move file');
   }
 
-  return move(images);
-}
-
-const readDir = async (filePath) => {
-  try {
-    const files = await readdir(filePath);
-    return files;
-  } catch (err) {
-    console.log(filePath.pathname, "error:", err.code);
-  }
-
-}
+  return move(images, source, destination);
+};
 
 const main = async () => {
 
-  if (!args.originPath) {
-    console.log('no input');
-    return;
-  }
-  
-  if (!args.destinationPath) {
-    console.log('no destination dir');
-    return;
-  }
+  try {
+    const userInput = await getUserInput();
+    
+    if (!userInput) {
+      return;
+    }
 
-  args.originPath = new URL(args.originPath, import.meta.url);
-  args.destinationPath = new URL(args.destinationPath, import.meta.url);
+    await handleUserInput(userInput);
 
-  if(!await readDir(args.destinationPath)){
-    return;
+  } catch (error) {
+    throw new Error('error trying to read user input');
   }
-
-  const files = await readDir(args.originPath);
-  if(files) {
-    move(files);
-  }
-}
+};
 
 main();
