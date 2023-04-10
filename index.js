@@ -4,9 +4,9 @@ import { extname, join } from 'path';
 const getUserInput = async () => {
 
   const [, , ...args] = process.argv;
-  const [flags, originPath, destinationPath] = args;
+  const [originPath, destinationPath, flags] = args;
   
-  if (!flags) {
+  if (!originPath) {
     throw new Error('no input');
   }
   
@@ -23,24 +23,47 @@ const getUserInput = async () => {
     throw new Error('error trying to read destination dir');
   }
 
-  let copy = flags === '-c';
+  let copyFlag = flags === '-c';
 
-  return { source, destination, copy };
+  return { source, destination, copyFlag };
 };
 
 const handleUserInput = async (userInput) => {
 
-  const { source, destination } = userInput;
+  const { source, destination, copyFlag } = userInput;
 
   try {
     const files = await readdir(source);
     if(files) {
-      await move(files, source, destination);
+      copyFlag ? await copy(files, source, destination) : await move(files, source, destination);
     }
   } catch (err) {
     throw new Error('error trying to read source dir');
   }
 };
+
+const copy = async (files, source, destination) => {
+  
+  if (files?.length === 0) {
+    return;
+  }
+
+  const images = files.filter(file => {
+    const ext = extname(file).slice(1);
+    return ext === 'png' || ext === 'jpg';
+  });
+
+  let fileToMove = images.pop();
+
+  try {
+    await copyFile(join(source, fileToMove), join(destination, fileToMove));
+    console.log(fileToMove, 'was copied');
+  } catch {
+    throw new Error('error trying to copy file');
+  }
+
+  return copy(images, source, destination);
+}
 
 const move = async (files, source, destination) => {
 
@@ -77,7 +100,7 @@ const main = async () => {
     await handleUserInput(userInput);
 
   } catch (error) {
-    throw new Error('error trying to read user input');
+    throw new Error(error);
   }
 };
 
