@@ -1,9 +1,10 @@
-import { readdir, rename, copyFile } from 'node:fs/promises';
+import { readdir, rename, copyFile, stat } from 'node:fs/promises';
 import { extname, join } from 'path';
 
-const getUserInput = async () => {
+const readUserInput = async () => {
 
   const [, , ...args] = process.argv;
+
   const [originPath, destinationPath, flags] = args;
   
   if (!originPath) {
@@ -31,15 +32,34 @@ const getUserInput = async () => {
 const handleUserInput = async (userInput) => {
 
   const { source, destination, copyFlag } = userInput;
+  let stats, files;
 
   try {
-    const files = await readdir(source);
-    if(files) {
-      copyFlag ? await copy(files, source, destination) : await move(files, source, destination);
+    stats = await stat(source);
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      throw new Error(`File or directory '${source}' does not exist.`);
+    } else {
+      throw new Error(error.message);
     }
-  } catch (err) {
-    throw new Error('error trying to read source dir');
   }
+
+  if (stats.isDirectory()) {
+    try {
+        files = await readdir(source);
+      } catch (err) {
+        throw new Error('error trying to read files from source dir');
+      }
+  }
+
+  if (stats.isFile()) {
+    files = source;
+  }
+
+  if(files) {
+    copyFlag ? await copy(files, source, destination) : await move(files, source, destination);
+  }
+
 };
 
 const copy = async (files, source, destination) => {
@@ -63,7 +83,7 @@ const copy = async (files, source, destination) => {
   }
 
   return copy(images, source, destination);
-}
+};
 
 const move = async (files, source, destination) => {
 
@@ -91,7 +111,7 @@ const move = async (files, source, destination) => {
 const main = async () => {
 
   try {
-    const userInput = await getUserInput();
+    const userInput = await readUserInput();
     
     if (!userInput) {
       return;
