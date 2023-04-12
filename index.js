@@ -57,13 +57,12 @@ const handleUserInput = async (userInput) => {
   }
 
   if(files) {
-    copyFlag ? await copy(files, source, destination) : await move(files, source, destination);
+    await copyOrMove(files, source, destination, copyFlag);
   }
 
 };
 
-const copy = async (files, source, destination) => {
-  
+const copyOrMove = async (files, source, destination, copyFlag) => {
   if (files?.length === 0) {
     return;
   }
@@ -75,41 +74,30 @@ const copy = async (files, source, destination) => {
 
   let fileToMove = images.pop();
 
+  copyFlag ? copy(fileToMove, source, destination) : move(fileToMove, source, destination)
+  
+  return copyOrMove(images, source, destination, copyFlag);
+};
+
+const copy = async (fileToMove, source, destination) => {
   try {
     await copyFile(join(source, fileToMove), join(destination, fileToMove));
     console.log(fileToMove, 'was copied');
   } catch {
     throw new Error('error trying to copy file');
   }
-
-  return copy(images, source, destination);
 };
 
-const move = async (files, source, destination) => {
-
-  if (files?.length === 0) {
-    return;
-  }
-
-  const images = files.filter(file => {
-    const ext = extname(file).slice(1);
-    return ext === 'png' || ext === 'jpg';
-  });
-
-  let fileToMove = images.pop();
-
+const move = async (fileToMove, source, destination) => {
   try {
     await rename(join(source, fileToMove), join(destination, fileToMove));
     console.log(fileToMove, 'was moved');
   } catch {
     throw new Error('error trying to move file');
   }
-
-  return move(images, source, destination);
 };
 
 const main = async () => {
-
   try {
     const userInput = await readUserInput();
     
