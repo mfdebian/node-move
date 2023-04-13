@@ -53,7 +53,8 @@ const handleUserInput = async (userInput) => {
   }
 
   if (stats.isFile()) {
-    files = source;
+    // copyFlag ? copy(source, source, destination) : move(source, source, destination)
+    console.log("arshivo");
   }
 
   if(files) {
@@ -74,24 +75,27 @@ const copyOrMove = async (files, source, destination, copyFlag) => {
 
   let fileToMove = images.pop();
 
-  copyFlag ? copy(fileToMove, source, destination) : move(fileToMove, source, destination)
+  let absoluteSourcePath = join(source, fileToMove);
+  let absoluteDestinationPath = join(destination, fileToMove);
+
+  copyFlag ? copy(absoluteSourcePath, absoluteDestinationPath) : move(absoluteSourcePath, absoluteDestinationPath)
   
   return copyOrMove(images, source, destination, copyFlag);
 };
 
-const copy = async (fileToMove, source, destination) => {
+const copy = async (source, destination) => {
   try {
-    await copyFile(join(source, fileToMove), join(destination, fileToMove));
-    console.log(fileToMove, 'was copied');
+    await copyFile(source, destination);
+    console.log(source, 'was copied');
   } catch {
     throw new Error('error trying to copy file');
   }
 };
 
-const move = async (fileToMove, source, destination) => {
+const move = async (source, destination) => {
   try {
-    await rename(join(source, fileToMove), join(destination, fileToMove));
-    console.log(fileToMove, 'was moved');
+    await rename(source, destination);
+    console.log(source, 'was moved');
   } catch {
     throw new Error('error trying to move file');
   }
