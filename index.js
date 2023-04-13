@@ -1,5 +1,5 @@
 import { readdir, rename, copyFile, stat } from 'node:fs/promises';
-import { extname, join } from 'path';
+import { extname, join, basename } from 'path';
 
 const readUserInput = async () => {
 
@@ -18,12 +18,6 @@ const readUserInput = async () => {
   let source = new URL(originPath, import.meta.url).pathname;
   let destination = new URL(destinationPath, import.meta.url).pathname;
 
-  try {
-    await readdir(destination);
-  } catch (err) {
-    throw new Error('error trying to read destination dir');
-  }
-
   let copyFlag = flags === '-c';
 
   return { source, destination, copyFlag };
@@ -31,11 +25,11 @@ const readUserInput = async () => {
 
 const handleUserInput = async (userInput) => {
 
-  const { source, destination, copyFlag } = userInput;
-  let stats, files;
+  let { source, destination, copyFlag } = userInput;
+  let sourceStats, destinationStats, files;
 
   try {
-    stats = await stat(source);
+    sourceStats = await stat(source);
   } catch (error) {
     if (error.code === 'ENOENT') {
       throw new Error(`File or directory '${source}' does not exist.`);
@@ -44,23 +38,31 @@ const handleUserInput = async (userInput) => {
     }
   }
 
-  if (stats.isDirectory()) {
+  try {
+    destinationStats = await stat(destination);
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      throw new Error(error.message);
+    }
+  }
+
+  if (sourceStats.isDirectory()) {
     try {
         files = await readdir(source);
+        if(files) {
+          await copyOrMove(files, source, destination, copyFlag);
+        }
       } catch (err) {
         throw new Error('error trying to read files from source dir');
       }
   }
 
-  if (stats.isFile()) {
-    // copyFlag ? copy(source, source, destination) : move(source, source, destination)
-    console.log("arshivo");
+  if (sourceStats.isFile()) {
+    if (destinationStats && destinationStats.isDirectory()) {
+      destination = join(destination, basename(source));
+    }
+    copyFlag ? copy(source, destination) : move(source, destination)
   }
-
-  if(files) {
-    await copyOrMove(files, source, destination, copyFlag);
-  }
-
 };
 
 const copyOrMove = async (files, source, destination, copyFlag) => {
