@@ -1,5 +1,6 @@
 import { readdir, rename, copyFile, stat } from 'node:fs/promises';
-import { extname, join, basename } from 'path';
+import { statSync } from 'node:fs';
+import { join, basename } from 'path';
 
 const readUserInput = async () => {
 
@@ -53,6 +54,7 @@ const handleUserInput = async (userInput) => {
           await copyOrMove(files, source, destination, copyFlag);
         }
       } catch (err) {
+        console.log(err);
         throw new Error('error trying to read files from source dir');
       }
   }
@@ -61,28 +63,34 @@ const handleUserInput = async (userInput) => {
     if (destinationStats && destinationStats.isDirectory()) {
       destination = join(destination, basename(source));
     }
-    copyFlag ? copy(source, destination) : move(source, destination)
+    copyFlag ? copy(source, destination) : move(source, destination);
   }
 };
 
-const copyOrMove = async (files, source, destination, copyFlag) => {
-  if (files?.length === 0) {
+const copyOrMove = async (dirContent, source, destination, copyFlag) => {
+  if (dirContent.length === 0) {
     return;
   }
 
-  const images = files.filter(file => {
-    const ext = extname(file).slice(1);
-    return ext === 'png' || ext === 'jpg';
+  let files = [];
+  let directories = [];
+  
+  dirContent.forEach(element => {
+    let stats = statSync(element);
+    if (stats.isFile()) {
+      files.push(element);
+    }
+   
+    if (stats.isDirectory()) {
+      directories.push(element);
+    }
   });
 
-  let fileToMove = images.pop();
-
-  let absoluteSourcePath = join(source, fileToMove);
-  let absoluteDestinationPath = join(destination, fileToMove);
-
-  copyFlag ? copy(absoluteSourcePath, absoluteDestinationPath) : move(absoluteSourcePath, absoluteDestinationPath)
+  files.forEach(file => {
+    copyFlag ? copy(join(source, file), join(destination, file)) : move(join(source, file), join(destination, file))
+  });
   
-  return copyOrMove(images, source, destination, copyFlag);
+  // return copyOrMove(dirContent, source, destination, copyFlag);
 };
 
 const copy = async (source, destination) => {
