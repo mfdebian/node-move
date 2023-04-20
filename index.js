@@ -1,5 +1,4 @@
-import { readdir, rename, copyFile, stat } from 'node:fs/promises';
-import { statSync } from 'node:fs';
+import { rename, copyFile, stat, opendir, mkdir } from 'node:fs/promises';
 import { join, basename } from 'path';
 
 const readUserInput = async () => {
@@ -27,7 +26,7 @@ const readUserInput = async () => {
 const handleUserInput = async (userInput) => {
 
   let { source, destination, copyFlag } = userInput;
-  let sourceStats, destinationStats, files;
+  let sourceStats, destinationStats;
 
   try {
     sourceStats = await stat(source);
@@ -48,56 +47,56 @@ const handleUserInput = async (userInput) => {
   }
 
   if (sourceStats.isDirectory()) {
-    try {
-        files = await readdir(source);
-        if(files) {
-          await copyOrMove(files, source, destination, copyFlag);
-        }
-      } catch (err) {
-        console.log(err);
-        throw new Error('error trying to read files from source dir');
-      }
+    await copyOrMove(source, destination, copyFlag);
   }
 
   if (sourceStats.isFile()) {
     if (destinationStats && destinationStats.isDirectory()) {
       destination = join(destination, basename(source));
     }
-    copyFlag ? copy(source, destination) : move(source, destination);
+    copyFlag ? await copy(source, destination) : await move(source, destination);
   }
 };
 
-const copyOrMove = async (dirContent, source, destination, copyFlag) => {
-  if (dirContent.length === 0) {
-    return;
-  }
+const copyOrMove = async (source, destination, copyFlag) => {
 
   let files = [];
   let directories = [];
   
-  dirContent.forEach(element => {
-    let stats = statSync(element);
-    if (stats.isFile()) {
-      files.push(element);
+  try {
+    const dir = await opendir(source);
+    for await (const dirent of dir) {
+      let sourcePath = join(source, dirent.name);
+      let stats = await stat(sourcePath);
+      if (stats.isFile()) {
+        files.push(dirent.name)
+      }
+      
+      if(stats.isDirectory()) {
+        directories.push(dirent.name)
+      }
     }
-   
-    if (stats.isDirectory()) {
-      directories.push(element);
-    }
+  } catch (err) {
+    throw new Error(err);
+  }
+  
+  for await (const file of files) {
+    let sourcePath = join(source, file);
+    let destinationPath = join(destination, file);
+    copyFlag ? await copy(sourcePath, destinationPath) : await move(sourcePath, destinationPath);
+  }
+
+  directories.forEach(dir => {
+    return copyOrMove(join(source, dir), destination, copyFlag);
   });
 
-  files.forEach(file => {
-    copyFlag ? copy(join(source, file), join(destination, file)) : move(join(source, file), join(destination, file))
-  });
-  
-  // return copyOrMove(dirContent, source, destination, copyFlag);
 };
 
 const copy = async (source, destination) => {
   try {
     await copyFile(source, destination);
     console.log(source, 'was copied');
-  } catch {
+  } catch(err) {
     throw new Error('error trying to copy file');
   }
 };
