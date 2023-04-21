@@ -93,23 +93,34 @@ const copyOrMove = async (source, destination, copyFlag) => {
     throw new Error(err);
   }
   
-  const __dirname = dirname(fileURLToPath(import.meta.url));
   
+  const sameDir = (dir) => {
+    // get cwd from where the app is being executed
+    const __dirname = dirname(fileURLToPath(import.meta.url));
+    // get path of given directory
+    let directory = resolve(dir);
+    
+    // check if they're the same
+    return __dirname === directory;
+  };
+
   for await (const file of files) {
     let sourcePath = join(source, file);
     let destinationPath = join(destination, file);
-    if (__dirname !== resolve(source)) {
+    if (!sameDir(source)) {
       let directoryNameInDestination = join(destination, basename(source));
       await checkAndMakeDirectory(directoryNameInDestination);
       destinationPath = join(directoryNameInDestination, file);
     }
+
     copyFlag ? await copy(sourcePath, destinationPath) : await move(sourcePath, destinationPath);
   }
   
   directories.forEach(dir => {
-    if (__dirname !== resolve(source)) {
-      return copyOrMove(join(source, dir), join(destination, basename(source)), copyFlag);
+    if (!sameDir(source)) {
+      destination = join(destination, basename(source));
     }
+
     return copyOrMove(join(source, dir), destination, copyFlag);
   });
   
