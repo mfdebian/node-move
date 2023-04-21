@@ -1,5 +1,6 @@
 import { rename, copyFile, stat, opendir, mkdir } from 'node:fs/promises';
-import { join, basename } from 'path';
+import { join, basename, dirname, resolve } from 'path';
+import { fileURLToPath } from 'url';
 
 const readUserInput = async () => {
 
@@ -92,16 +93,24 @@ const copyOrMove = async (source, destination, copyFlag) => {
     throw new Error(err);
   }
   
+  const __dirname = dirname(fileURLToPath(import.meta.url));
+  
   for await (const file of files) {
     let sourcePath = join(source, file);
-    let directoryNameInDestination = join(destination, basename(source));
-    await checkAndMakeDirectory(directoryNameInDestination);
-    let destinationPath = join(directoryNameInDestination, file);
+    let destinationPath = join(destination, file);
+    if (__dirname !== resolve(source)) {
+      let directoryNameInDestination = join(destination, basename(source));
+      await checkAndMakeDirectory(directoryNameInDestination);
+      destinationPath = join(directoryNameInDestination, file);
+    }
     copyFlag ? await copy(sourcePath, destinationPath) : await move(sourcePath, destinationPath);
   }
   
   directories.forEach(dir => {
-    return copyOrMove(join(source, dir), join(destination, basename(source)), copyFlag);
+    if (__dirname !== resolve(source)) {
+      return copyOrMove(join(source, dir), join(destination, basename(source)), copyFlag);
+    }
+    return copyOrMove(join(source, dir), destination, copyFlag);
   });
   
 };
