@@ -58,6 +58,16 @@ const handleUserInput = async (userInput) => {
   }
 };
 
+const checkAndMakeDirectory = async (dirname) => {
+  try {
+    const projectFolder = new URL(dirname, import.meta.url);
+    const createDir = await mkdir(projectFolder);
+    // console.log(`created ${createDir}`);
+  } catch (err) {
+    // console.error(err.message);
+  }
+}
+
 const copyOrMove = async (source, destination, copyFlag) => {
 
   let files = [];
@@ -66,14 +76,16 @@ const copyOrMove = async (source, destination, copyFlag) => {
   try {
     const dir = await opendir(source);
     for await (const dirent of dir) {
-      let sourcePath = join(source, dirent.name);
-      let stats = await stat(sourcePath);
-      if (stats.isFile()) {
-        files.push(dirent.name)
-      }
-      
-      if(stats.isDirectory()) {
-        directories.push(dirent.name)
+      if(dirent.name !== '.git') {
+        let sourcePath = join(source, dirent.name);
+        let stats = await stat(sourcePath);
+        if (stats.isFile()) {
+          files.push(dirent.name)
+        }
+        
+        if(stats.isDirectory()) {
+          directories.push(dirent.name)
+        }
       }
     }
   } catch (err) {
@@ -82,14 +94,16 @@ const copyOrMove = async (source, destination, copyFlag) => {
   
   for await (const file of files) {
     let sourcePath = join(source, file);
-    let destinationPath = join(destination, file);
+    let directoryNameInDestination = join(destination, basename(source));
+    await checkAndMakeDirectory(directoryNameInDestination);
+    let destinationPath = join(directoryNameInDestination, file);
     copyFlag ? await copy(sourcePath, destinationPath) : await move(sourcePath, destinationPath);
   }
-
+  
   directories.forEach(dir => {
-    return copyOrMove(join(source, dir), destination, copyFlag);
+    return copyOrMove(join(source, dir), join(destination, basename(source)), copyFlag);
   });
-
+  
 };
 
 const copy = async (source, destination) => {
@@ -97,6 +111,7 @@ const copy = async (source, destination) => {
     await copyFile(source, destination);
     console.log(source, 'was copied');
   } catch(err) {
+    console.log(err);
     throw new Error('error trying to copy file');
   }
 };
