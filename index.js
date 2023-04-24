@@ -107,7 +107,7 @@ const copyOrMove = async (source, destination, copyFlag) => {
   for await (const file of files) {
     let sourcePath = join(source, file);
     let destinationPath = join(destination, file);
-    if (!sameDir(source)) {
+    if (dirname(sourcePath) !== dirname(resolve(file))) {
       let directoryNameInDestination = join(destination, basename(source));
       await checkAndMakeDirectory(directoryNameInDestination);
       destinationPath = join(directoryNameInDestination, file);
