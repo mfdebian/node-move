@@ -1,6 +1,5 @@
 import { rename, copyFile, stat, opendir, mkdir } from 'node:fs/promises';
-import { join, basename, dirname, resolve } from 'path';
-import { fileURLToPath } from 'url';
+import { join, basename } from 'path';
 
 const readUserInput = async () => {
 
@@ -73,7 +72,7 @@ const copyOrMove = async (source, destination, copyFlag) => {
 
   let files = [];
   let directories = [];
-  
+
   try {
     const dir = await opendir(source);
     for await (const dirent of dir) {
@@ -92,38 +91,21 @@ const copyOrMove = async (source, destination, copyFlag) => {
   } catch (err) {
     throw new Error(err);
   }
-  
-  
-  const sameDir = (dir) => {
-    // get cwd from where the app is being executed
-    const __dirname = dirname(fileURLToPath(import.meta.url));
-    // get path of given directory
-    let directory = resolve(dir);
-    
-    // check if they're the same
-    return __dirname === directory;
-  };
 
   for await (const file of files) {
     let sourcePath = join(source, file);
     let destinationPath = join(destination, file);
-    if (dirname(sourcePath) !== dirname(resolve(file))) {
-      let directoryNameInDestination = join(destination, basename(source));
-      await checkAndMakeDirectory(directoryNameInDestination);
-      destinationPath = join(directoryNameInDestination, file);
-    }
+    await checkAndMakeDirectory(destination);
 
     copyFlag ? await copy(sourcePath, destinationPath) : await move(sourcePath, destinationPath);
   }
-  
-  directories.forEach(dir => {
-    if (!sameDir(source)) {
-      destination = join(destination, basename(source));
-    }
 
-    return copyOrMove(join(source, dir), destination, copyFlag);
+  directories.forEach(dir => {
+    source = join(source, dir);
+    destination = join(destination, dir);
+    return copyOrMove(source, destination, copyFlag);
   });
-  
+
 };
 
 const copy = async (source, destination) => {
@@ -131,7 +113,6 @@ const copy = async (source, destination) => {
     await copyFile(source, destination);
     console.log(source, 'was copied');
   } catch(err) {
-    console.log(err);
     throw new Error('error trying to copy file');
   }
 };
