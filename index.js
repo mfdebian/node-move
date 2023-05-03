@@ -83,11 +83,11 @@ const checkAndRemoveDirectory = async (dirname) => {
       try {
         await rm(projectFolder, { recursive: true, force: true });
       } catch(err) {
-        console.log(err);
+        console.error(err);
       }
     }
   } catch (error) {
-    
+    // console.error(error);
   }
 }
 
@@ -118,17 +118,16 @@ const copyOrMove = async (source, destination, copyFlag) => {
   for await (const file of files) {
     let sourcePath = join(source, file);
     let destinationPath = join(destination, file);
-    await checkAndMakeDirectory(destination);
-
-    copyFlag ? copy(sourcePath, destinationPath) : move(sourcePath, destinationPath);
+    
+    copyFlag ? await copy(sourcePath, destinationPath) : await move(sourcePath, destinationPath);
   }
-
+  
   for await (const dir of directories) {
-    // console.log('dir :>> ', dir);
     source = join(source, dir);
     destination = join(destination, dir);
+    await checkAndMakeDirectory(destination);
     directoriesTBD.push(source);
-    return copyOrMove(source, destination, copyFlag);
+    return await copyOrMove(source, destination, copyFlag);
   }
 
 };
@@ -163,7 +162,7 @@ const main = async () => {
     
     if (!userInput.copyFlag) {
       for await (const dir of directoriesTBD) {
-        checkAndRemoveDirectory(dir)
+        await checkAndRemoveDirectory(dir)
       }
     }
 
