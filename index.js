@@ -1,5 +1,7 @@
-import { rename, copyFile, stat, opendir, mkdir } from 'node:fs/promises';
+import { rename, copyFile, stat, opendir, mkdir, rm } from 'node:fs/promises';
 import { join, basename } from 'path';
+
+let directoriesTBD = [];
 
 const readUserInput = async () => {
 
@@ -65,11 +67,27 @@ const checkAndMakeDirectory = async (dirname) => {
     if (error.code === "ENOENT") {
       const projectFolder = new URL(dirname, import.meta.url);
       try {
-        await mkdir(projectFolder);
+        await mkdir(projectFolder, { recursive: true });
       } catch (err) {
         console.error(err.message);
       }
     }
+  }
+}
+
+const checkAndRemoveDirectory = async (dirname) => {
+  try {
+    let stats = await stat(dirname);
+    if (stats.isDirectory()) {
+      const projectFolder = new URL(dirname, import.meta.url);
+      try {
+        await rm(projectFolder, { recursive: true, force: true });
+      } catch(err) {
+        console.log(err);
+      }
+    }
+  } catch (error) {
+    
   }
 }
 
@@ -102,14 +120,16 @@ const copyOrMove = async (source, destination, copyFlag) => {
     let destinationPath = join(destination, file);
     await checkAndMakeDirectory(destination);
 
-    copyFlag ? await copy(sourcePath, destinationPath) : await move(sourcePath, destinationPath);
+    copyFlag ? copy(sourcePath, destinationPath) : move(sourcePath, destinationPath);
   }
 
-  directories.forEach(dir => {
+  for await (const dir of directories) {
+    // console.log('dir :>> ', dir);
     source = join(source, dir);
     destination = join(destination, dir);
+    directoriesTBD.push(source);
     return copyOrMove(source, destination, copyFlag);
-  });
+  }
 
 };
 
@@ -140,6 +160,12 @@ const main = async () => {
     }
 
     await handleUserInput(userInput);
+    
+    if (!userInput.copyFlag) {
+      for await (const dir of directoriesTBD) {
+        checkAndRemoveDirectory(dir)
+      }
+    }
 
   } catch (error) {
     throw new Error(error);
