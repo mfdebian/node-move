@@ -60,11 +60,16 @@ const handleUserInput = async (userInput) => {
 
 const checkAndMakeDirectory = async (dirname) => {
   try {
-    const projectFolder = new URL(dirname, import.meta.url);
-    const createDir = await mkdir(projectFolder);
-    // console.log(`created ${createDir}`);
-  } catch (err) {
-    // console.error(err.message);
+    await stat(dirname);
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      const projectFolder = new URL(dirname, import.meta.url);
+      try {
+        await mkdir(projectFolder);
+      } catch (err) {
+        console.error(err.message);
+      }
+    }
   }
 }
 
