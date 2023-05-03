@@ -1,7 +1,7 @@
 import { rename, copyFile, stat, opendir, mkdir, rm } from 'node:fs/promises';
 import { join, basename } from 'path';
 
-let directoriesTBD = [];
+let directoriesToBeDeleted = [];
 
 const readUserInput = async () => {
 
@@ -126,7 +126,7 @@ const copyOrMove = async (source, destination, copyFlag) => {
     source = join(source, dir);
     destination = join(destination, dir);
     await checkAndMakeDirectory(destination);
-    directoriesTBD.push(source);
+    directoriesToBeDeleted.push(source);
     return await copyOrMove(source, destination, copyFlag);
   }
 
@@ -161,7 +161,7 @@ const main = async () => {
     await handleUserInput(userInput);
     
     if (!userInput.copyFlag) {
-      for await (const dir of directoriesTBD) {
+      for await (const dir of directoriesToBeDeleted) {
         await checkAndRemoveDirectory(dir)
       }
     }
