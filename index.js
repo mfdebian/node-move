@@ -3,7 +3,7 @@ import { join, basename } from 'path';
 
 let directoriesToBeDeleted = [];
 
-const readUserInput = async () => {
+export const readUserInput = () => {
 
   const [, , ...args] = process.argv;
 
@@ -25,7 +25,7 @@ const readUserInput = async () => {
   return { source, destination, copyFlag };
 };
 
-const handleUserInput = async (userInput) => {
+export const handleUserInput = async (userInput) => {
 
   let { source, destination, copyFlag } = userInput;
   let sourceStats, destinationStats;
@@ -69,7 +69,7 @@ const checkAndMakeDirectory = async (dirname) => {
       try {
         await mkdir(projectFolder, { recursive: true });
       } catch (err) {
-        console.error(err.message);
+        console.log(err.message);
       }
     }
   }
@@ -87,7 +87,7 @@ const checkAndRemoveDirectory = async (dirname) => {
       }
     }
   } catch (error) {
-    // console.error(error);
+    // console.log(error);
   }
 }
 
@@ -99,7 +99,7 @@ const copyOrMove = async (source, destination, copyFlag) => {
   try {
     const dir = await opendir(source);
     for await (const dirent of dir) {
-      if(dirent.name !== '.git') {
+      if(dirent.name !== '.git' && dirent.name !== 'node_modules') {
         let sourcePath = join(source, dirent.name);
         let stats = await stat(sourcePath);
         if (stats.isFile()) {
@@ -152,7 +152,7 @@ const move = async (source, destination) => {
 
 const main = async () => {
   try {
-    const userInput = await readUserInput();
+    const userInput = readUserInput();
     
     if (!userInput) {
       return;
@@ -167,7 +167,7 @@ const main = async () => {
     }
 
   } catch (error) {
-    throw new Error(error);
+    console.log(error.message);
   }
 };
 
