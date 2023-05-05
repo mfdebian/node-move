@@ -34,7 +34,7 @@ export const handleUserInput = async (userInput) => {
     sourceStats = await stat(source);
   } catch (error) {
     if (error.code === 'ENOENT') {
-      throw new Error(`File or directory '${source}' does not exist.`);
+      throw new Error(`File or directory '${source}' does not exist`);
     } else {
       throw new Error(error.message);
     }
