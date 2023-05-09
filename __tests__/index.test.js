@@ -106,3 +106,22 @@ describe('moveOrCopy', () => {
     expect(source3Stat).toBeTruthy();
   });  
 });
+
+describe('checkAndMakeDirectory', () => {
+  test('should create a new directory with name 04-source', async () => {
+    let dirname = './__tests__/__fixtures__/01-source/02-source/03-source/04-source';
+    await checkAndMakeDirectory(dirname);
+    let source4Stat = stat('./__tests__/__fixtures__/01-source/02-source/03-source/04-source')
+
+    expect(source4Stat).toBeTruthy();
+    expect((await source4Stat).isDirectory()).toBe(true);
+  })
+});
+
+describe('checkAndRemoveDirectory', () => {
+  test('should remove a directory with name 04-source', async () => {
+    let dirname = './__tests__/__fixtures__/01-source/02-source/03-source/04-source';
+    await checkAndRemoveDirectory(dirname);
+    await expect(stat('./__tests__/__fixtures__/01-source/02-source/03-source/04-source')).rejects.toThrow(Error, /ENOENT/);
+  })
+});
