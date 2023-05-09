@@ -60,7 +60,7 @@ export const handleUserInput = async (userInput) => {
   }
 };
 
-const checkAndMakeDirectory = async (dirname) => {
+export const checkAndMakeDirectory = async (dirname) => {
   try {
     await stat(dirname);
   } catch (error) {
@@ -75,7 +75,7 @@ const checkAndMakeDirectory = async (dirname) => {
   }
 }
 
-const checkAndRemoveDirectory = async (dirname) => {
+export const checkAndRemoveDirectory = async (dirname) => {
   try {
     let stats = await stat(dirname);
     if (stats.isDirectory()) {
@@ -91,7 +91,7 @@ const checkAndRemoveDirectory = async (dirname) => {
   }
 }
 
-const copyOrMove = async (source, destination, copyFlag) => {
+export const copyOrMove = async (source, destination, copyFlag) => {
 
   let files = [];
   let directories = [];

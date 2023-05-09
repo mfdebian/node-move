@@ -1,5 +1,10 @@
+import { stat } from 'node:fs/promises';
 import { describe, expect, test } from 'vitest';
-import { readUserInput, handleUserInput } from '..';
+import { readUserInput,
+  handleUserInput,
+  copyOrMove,
+  checkAndMakeDirectory,
+  checkAndRemoveDirectory } from '../index.js';
 
 describe('readUserInput', () => {
   test('should throw `no input` error if no input is given', () => {
@@ -38,4 +43,66 @@ describe('handleUserInput', () => {
 
     await expect(()=> handleUserInput(userInput)).rejects.toThrowError('File or directory \'path/to/nonexisting/file\' does not exist');
   });
+
+  test('should move source file to destination if copyFlag is false', async () => {
+    const userInput = {
+      source: './__tests__/__fixtures__/01-source/01-source_file.txt',
+      destination: './__tests__/__fixtures__/01-destination/',
+      copyFlag: false,
+    };
+
+    await handleUserInput(userInput);
+
+    await expect(stat('./__tests__/__fixtures__/01-source/01-source_file.txt')).rejects.toThrow(Error, /ENOENT/);
+
+    let fileInDestinationStat = stat('./__tests__/__fixtures__/01-destination/01-source_file.txt')
+
+    expect(fileInDestinationStat).toBeTruthy();
+  });
+
+  test('should copy source file to destination if copyFlag is true', async () => {
+    const userInput = {
+      source: './__tests__/__fixtures__/01-destination/01-source_file.txt',
+      destination: './__tests__/__fixtures__/01-source/',
+      copyFlag: true,
+    };
+
+    await handleUserInput(userInput);
+    
+    let fileInDestinationStat = stat('./__tests__/__fixtures__/01-source/01-source_file.txt');
+
+    expect(()=> handleUserInput(userInput)).not.toThrow()
+    expect(fileInDestinationStat).toBeTruthy();
+  });
+});
+
+describe('moveOrCopy', () => {  
+  test('should move source dir and files to destination if copyFlag is false', async () => {
+    let source = './__tests__/__fixtures__/01-source/02-source/';
+    let destination = './__tests__/__fixtures__/01-destination/02-destination/';
+    let copyFlag = false;
+  
+    await copyOrMove(source, destination, copyFlag);
+  
+    await expect(stat('./__tests__/__fixtures__/01-source/02-source/03-source/03-source-file.txt')).rejects.toThrow(Error, /ENOENT/);
+    
+    let fileInDestinationStat = stat('./__tests__/__fixtures__/01-destination/02-destination/03-source/03-source-file.txt')
+    expect(fileInDestinationStat).toBeTruthy();
+  });
+      
+  test('should copy source dir and files to destination if copyFlag is true', async () => {
+    let source = './__tests__/__fixtures__/01-destination/02-destination/';
+    let destination = './__tests__/__fixtures__/01-source/02-source/';
+    let copyFlag = true;
+    
+    await copyOrMove(source, destination, copyFlag);
+  
+    let source2Stat = stat('./__tests__/__fixtures__/01-source/02-source/02-source_file.txt')
+  
+    expect(source2Stat).toBeTruthy();
+
+    let source3Stat = stat('./__tests__/__fixtures__/01-source/02-source/03-source/03-source-file.txt')
+  
+    expect(source3Stat).toBeTruthy();
+  });  
 });
