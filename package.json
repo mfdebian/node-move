@@ -6,12 +6,21 @@
   "type": "module",
   "scripts": {
     "test": "vitest",
-    "coverage": "vitest run --coverage"
+    "coverage": "vitest run --coverage",
+    "format": "prettier --write \"**/*.{js,ts,html,css,md,json}\"",
+    "lint": "eslint . ",
+    "lint:fix": "eslint . --fix "
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@vitest/coverage-v8": "^4.0.10",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^16.5.0",
+    "prettier": "^3.6.2",
     "vitest": "^4.0.10"
   }
 }

@@ -44,7 +44,7 @@ describe('handleUserInput', () => {
     };
 
     await expect(() => handleUserInput(userInput)).rejects.toThrowError(
-      "File or directory 'path/to/nonexisting/file' does not exist"
+      "File or directory 'path/to/nonexisting/file' does not exist",
     );
   });
 
@@ -58,11 +58,11 @@ describe('handleUserInput', () => {
     await handleUserInput(userInput);
 
     await expect(
-      stat('./__tests__/__fixtures__/01-source/01-source_file.txt')
+      stat('./__tests__/__fixtures__/01-source/01-source_file.txt'),
     ).rejects.toThrow(Error, /ENOENT/);
 
     let fileInDestinationStat = stat(
-      './__tests__/__fixtures__/01-destination/01-source_file.txt'
+      './__tests__/__fixtures__/01-destination/01-source_file.txt',
     );
 
     expect(fileInDestinationStat).toBeTruthy();
@@ -78,7 +78,7 @@ describe('handleUserInput', () => {
     await handleUserInput(userInput);
 
     let fileInDestinationStat = stat(
-      './__tests__/__fixtures__/01-source/01-source_file.txt'
+      './__tests__/__fixtures__/01-source/01-source_file.txt',
     );
 
     expect(() => handleUserInput(userInput)).not.toThrow();
@@ -96,12 +96,12 @@ describe('moveOrCopy', () => {
 
     await expect(
       stat(
-        './__tests__/__fixtures__/01-source/02-source/03-source/03-source-file.txt'
-      )
+        './__tests__/__fixtures__/01-source/02-source/03-source/03-source-file.txt',
+      ),
     ).rejects.toThrow(Error, /ENOENT/);
 
     let fileInDestinationStat = stat(
-      './__tests__/__fixtures__/01-destination/02-destination/03-source/03-source-file.txt'
+      './__tests__/__fixtures__/01-destination/02-destination/03-source/03-source-file.txt',
     );
     expect(fileInDestinationStat).toBeTruthy();
   });
@@ -114,13 +114,13 @@ describe('moveOrCopy', () => {
     await copyOrMove(source, destination, copyFlag);
 
     let source2Stat = stat(
-      './__tests__/__fixtures__/01-source/02-source/02-source_file.txt'
+      './__tests__/__fixtures__/01-source/02-source/02-source_file.txt',
     );
 
     expect(source2Stat).toBeTruthy();
 
     let source3Stat = stat(
-      './__tests__/__fixtures__/01-source/02-source/03-source/03-source-file.txt'
+      './__tests__/__fixtures__/01-source/02-source/03-source/03-source-file.txt',
     );
 
     expect(source3Stat).toBeTruthy();
@@ -133,7 +133,7 @@ describe('checkAndMakeDirectory', () => {
       './__tests__/__fixtures__/01-source/02-source/03-source/04-source';
     await checkAndMakeDirectory(dirname);
     let source4Stat = stat(
-      './__tests__/__fixtures__/01-source/02-source/03-source/04-source'
+      './__tests__/__fixtures__/01-source/02-source/03-source/04-source',
     );
 
     expect(source4Stat).toBeTruthy();
@@ -147,7 +147,7 @@ describe('checkAndRemoveDirectory', () => {
       './__tests__/__fixtures__/01-source/02-source/03-source/04-source';
     await checkAndRemoveDirectory(dirname);
     await expect(
-      stat('./__tests__/__fixtures__/01-source/02-source/03-source/04-source')
+      stat('./__tests__/__fixtures__/01-source/02-source/03-source/04-source'),
     ).rejects.toThrow(Error, /ENOENT/);
   });
 });

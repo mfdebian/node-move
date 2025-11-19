@@ -1,5 +1,5 @@
-import { rename, copyFile, stat, opendir, mkdir, rm } from 'node:fs/promises';
-import { join, basename } from 'node:path';
+import { copyFile, mkdir, opendir, rename, rm, stat } from 'node:fs/promises';
+import { basename, join } from 'node:path';
 
 let directoriesToBeDeleted = [];
 
@@ -69,7 +69,7 @@ export const checkAndMakeDirectory = async (dirname) => {
       try {
         await mkdir(projectFolder, { recursive: true });
       } catch (err) {
-        console.log(err.message);
+        console.error(err.message);
       }
     }
   }
@@ -87,7 +87,7 @@ export const checkAndRemoveDirectory = async (dirname) => {
       }
     }
   } catch (error) {
-    // console.log(error);
+    console.error(error.message);
   }
 };
 
@@ -136,7 +136,7 @@ const copy = async (source, destination) => {
   try {
     await copyFile(source, destination);
     console.log(source, 'was copied');
-  } catch (err) {
+  } catch {
     throw new Error('error trying to copy file');
   }
 };
